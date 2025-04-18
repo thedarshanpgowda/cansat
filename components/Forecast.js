@@ -7,14 +7,14 @@ import { Search, RefreshCw, ArrowUp, ArrowDown, Calendar } from 'lucide-react';
 import Image from 'next/image';
 
 export default function Home() {
-    const [selectedDate, setSelectedDate] = useState(new Date()); // Default to current date
+    const [selectedDate, setSelectedDate] = useState(new Date()); 
     const [weekData, setWeekData] = useState([]);
     const [selectedDayData, setSelectedDayData] = useState(null);
     const [view, setView] = useState('week');
     const [searchQuery, setSearchQuery] = useState('');
     const [location, setLocation] = useState('San Francisco');
     const [tempUnit, setTempUnit] = useState('C');
-    const [showDashboard, setShowDashboard] = useState(true); // Always show the dashboard
+    const [showDashboard, setShowDashboard] = useState(true); 
 
     useEffect(() => {
         if (selectedDate && showDashboard) {
@@ -22,7 +22,7 @@ export default function Home() {
 
             for (let i = 0; i < 7; i++) {
                 const day = addDays(selectedDate, i);
-                const temperature = Math.floor(Math.random() * 20) + (i === 0 ? 10 : 3); // Higher temp for first day
+                const temperature = Math.floor(Math.random() * 20) + (i === 0 ? 10 : 3); 
                 const lowTemp = temperature - Math.floor(Math.random() * 5) - 3;
 
                 weekForecast.push({

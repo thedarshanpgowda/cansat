@@ -12,19 +12,16 @@ export default function AppleMinimalistSensorVisualizer() {
     const [lastUpdated, setLastUpdated] = useState(Date.now());
     const animationRef = useRef(null);
 
-    // Canvas refs for each visualization
     const accelCanvasRef = useRef(null);
     const gyroCanvasRef = useRef(null);
     const magCanvasRef = useRef(null);
 
     useEffect(() => {
-        // Check if sensors are supported
         if (!window.DeviceMotionEvent || !window.DeviceOrientationEvent) {
             setPermission('unsupported');
             return;
         }
 
-        // Function to request device motion permission
         const requestSensorPermission = async () => {
             try {
                 if (typeof DeviceMotionEvent.requestPermission === 'function') {
@@ -39,7 +36,6 @@ export default function AppleMinimalistSensorVisualizer() {
             }
         };
 
-        // Set up device motion event listeners with 3-second interval
         const handleMotion = (event) => {
             const currentTime = Date.now();
             if (currentTime - lastUpdated >= 3000) {
@@ -57,7 +53,6 @@ export default function AppleMinimalistSensorVisualizer() {
             }
         };
 
-        // Set up device orientation event listeners with 3-second interval
         const handleOrientation = (event) => {
             const currentTime = Date.now();
             if (currentTime - lastUpdated >= 3000) {
@@ -72,7 +67,6 @@ export default function AppleMinimalistSensorVisualizer() {
             }
         };
 
-        // Simulate magnetometer data with 3-second interval
         const simulateMagnetometer = () => {
             const interval = setInterval(() => {
                 setSensorData(prev => ({
@@ -105,7 +99,6 @@ export default function AppleMinimalistSensorVisualizer() {
         }
     }, [permission, lastUpdated]);
 
-    // Drawing functions for each sensor type
     useEffect(() => {
         if (permission !== 'granted') return;
 
@@ -117,19 +110,15 @@ export default function AppleMinimalistSensorVisualizer() {
             const width = canvas.width;
             const height = canvas.height;
 
-            // Clear canvas with a very light gray
             ctx.fillStyle = 'rgba(250, 250, 250, 0.9)';
             ctx.fillRect(0, 0, width, height);
 
-            // Set center point
             const centerX = width / 2;
             const centerY = height / 2;
 
-            // Draw background grid
             ctx.strokeStyle = 'rgba(210, 210, 210, 0.8)';
             ctx.lineWidth = 1;
 
-            // Vertical lines
             for (let x = 0; x <= width; x += width / 10) {
                 ctx.beginPath();
                 ctx.moveTo(x, 0);
@@ -137,7 +126,6 @@ export default function AppleMinimalistSensorVisualizer() {
                 ctx.stroke();
             }
 
-            // Horizontal lines
             for (let y = 0; y <= height; y += height / 10) {
                 ctx.beginPath();
                 ctx.moveTo(0, y);
@@ -145,29 +133,24 @@ export default function AppleMinimalistSensorVisualizer() {
                 ctx.stroke();
             }
 
-            // Draw center axes
             ctx.strokeStyle = 'rgba(180, 180, 180, 0.9)';
             ctx.lineWidth = 2;
 
-            // X axis
             ctx.beginPath();
             ctx.moveTo(0, centerY);
             ctx.lineTo(width, centerY);
             ctx.stroke();
 
-            // Y axis
             ctx.beginPath();
             ctx.moveTo(centerX, 0);
             ctx.lineTo(centerX, height);
             ctx.stroke();
 
-            // Calculate position based on accelerometer data
-            const scale = 20; // Scale factor for visualization
+            const scale = 20;
             const posX = centerX + (sensorData.accelerometer.x * scale);
             const posY = centerY - (sensorData.accelerometer.y * scale);
             const radius = 20 + Math.abs(sensorData.accelerometer.z * 0.8);
 
-            // Draw position dot
             const gradient = ctx.createRadialGradient(posX, posY, 0, posX, posY, radius);
             gradient.addColorStop(0, 'rgba(0, 122, 255, 1)');
             gradient.addColorStop(0.6, 'rgba(10, 132, 255, 0.7)');
@@ -178,25 +161,21 @@ export default function AppleMinimalistSensorVisualizer() {
             ctx.arc(posX, posY, radius, 0, Math.PI * 2);
             ctx.fill();
 
-            // Add subtle shadow
             ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
             ctx.shadowBlur = 10;
             ctx.shadowOffsetX = 2;
             ctx.shadowOffsetY = 2;
 
-            // Draw center point
             ctx.fillStyle = 'rgba(0, 122, 255, 0.9)';
             ctx.beginPath();
             ctx.arc(posX, posY, 6, 0, Math.PI * 2);
             ctx.fill();
 
-            // Reset shadow
             ctx.shadowColor = 'transparent';
             ctx.shadowBlur = 0;
             ctx.shadowOffsetX = 0;
             ctx.shadowOffsetY = 0;
 
-            // Draw X and Y labels
             ctx.fillStyle = 'rgba(100, 100, 100, 0.8)';
             ctx.font = '14px SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif';
             ctx.textAlign = 'left';
@@ -214,31 +193,31 @@ export default function AppleMinimalistSensorVisualizer() {
             const width = canvas.width;
             const height = canvas.height;
 
-            // Clear canvas with a very light gray
+            
             ctx.fillStyle = 'rgba(250, 250, 250, 0.9)';
             ctx.fillRect(0, 0, width, height);
 
-            // Set center point
+            
             const centerX = width / 2;
             const centerY = height / 2;
             const size = Math.min(width, height) * 0.7;
 
-            // Create 3D-like rotation effect using gyroscope data
+            
             ctx.save();
             ctx.translate(centerX, centerY);
 
-            // Apply rotations
+            
             const degToRad = Math.PI / 180;
             ctx.rotate(sensorData.gyroscope.z * degToRad);
 
-            // Draw circular gauge
+            
             ctx.strokeStyle = 'rgba(220, 220, 220, 0.9)';
             ctx.lineWidth = 2;
             ctx.beginPath();
             ctx.arc(0, 0, size / 2, 0, Math.PI * 2);
             ctx.stroke();
 
-            // Draw degree markers
+            
             for (let i = 0; i < 360; i += 30) {
                 const angle = i * degToRad;
                 const innerRadius = size / 2 - 15;
@@ -252,14 +231,14 @@ export default function AppleMinimalistSensorVisualizer() {
                 ctx.stroke();
             }
 
-            // Draw cardinal directions
+            
             ctx.fillStyle = 'rgba(80, 80, 80, 0.9)';
             ctx.font = '16px SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
             const directions = ['N', 'E', 'S', 'W'];
-            const directionAngles = [270, 0, 90, 180]; // In degrees, clockwise from top
+            const directionAngles = [270, 0, 90, 180]; 
 
             directions.forEach((dir, i) => {
                 const angle = directionAngles[i] * degToRad;
@@ -267,18 +246,18 @@ export default function AppleMinimalistSensorVisualizer() {
                 ctx.fillText(dir, textRadius * Math.cos(angle), textRadius * Math.sin(angle));
             });
 
-            // Draw tilt indicator (simulated 3D)
+            
             const betaRadians = sensorData.gyroscope.y * degToRad;
             const gammaRadians = sensorData.gyroscope.x * degToRad;
 
-            // Draw inner circle
+            
             const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, size / 4);
             gradient.addColorStop(0, 'rgba(255, 45, 85, 0.9)');
             gradient.addColorStop(1, 'rgba(255, 45, 85, 0.3)');
 
             ctx.fillStyle = gradient;
 
-            // Apply perspective transform for tilt
+            
             ctx.beginPath();
             ctx.ellipse(
                 Math.sin(gammaRadians) * 10,
@@ -289,17 +268,17 @@ export default function AppleMinimalistSensorVisualizer() {
             );
             ctx.fill();
 
-            // Draw cross in the middle
+            
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
             ctx.lineWidth = 3;
 
-            // Horizontal line
+            
             ctx.beginPath();
             ctx.moveTo(-size / 10, 0);
             ctx.lineTo(size / 10, 0);
             ctx.stroke();
 
-            // Vertical line
+            
             ctx.beginPath();
             ctx.moveTo(0, -size / 10);
             ctx.lineTo(0, size / 10);
@@ -307,7 +286,7 @@ export default function AppleMinimalistSensorVisualizer() {
 
             ctx.restore();
 
-            // Draw values
+            
             ctx.fillStyle = 'rgba(100, 100, 100, 0.8)';
             ctx.font = '14px SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif';
             ctx.textAlign = 'left';
@@ -325,24 +304,24 @@ export default function AppleMinimalistSensorVisualizer() {
             const width = canvas.width;
             const height = canvas.height;
 
-            // Clear canvas with a very light gray
+            
             ctx.fillStyle = 'rgba(250, 250, 250, 0.9)';
             ctx.fillRect(0, 0, width, height);
 
-            // Set center point
+            
             const centerX = width / 2;
             const centerY = height / 2;
             const size = Math.min(width, height) * 0.7;
 
-            // Calculate field strength and direction
+            
             const { x, y, z } = sensorData.magnetometer;
             const fieldStrength = Math.sqrt(x * x + y * y + z * z);
             const normalizedStrength = Math.min(1, fieldStrength / 100);
 
-            // Calculate compass direction
+            
             const angle = Math.atan2(y, x);
 
-            // Draw circular background
+            
             ctx.fillStyle = 'rgba(240, 240, 240, 0.8)';
             ctx.beginPath();
             ctx.arc(centerX, centerY, size / 2, 0, Math.PI * 2);
@@ -352,7 +331,7 @@ export default function AppleMinimalistSensorVisualizer() {
             ctx.lineWidth = 2;
             ctx.stroke();
 
-            // Draw field rings
+            
             const numRings = 3;
             for (let i = 1; i <= numRings; i++) {
                 const radius = (size / 2) * (i / numRings);
@@ -364,9 +343,9 @@ export default function AppleMinimalistSensorVisualizer() {
                 ctx.stroke();
             }
 
-            // Draw direction markers
+            
             const directions = ['N', 'E', 'S', 'W'];
-            const directionAngles = [270, 0, 90, 180]; // In degrees, clockwise from top
+            const directionAngles = [270, 0, 90, 180]; 
 
             ctx.fillStyle = 'rgba(80, 80, 80, 0.9)';
             ctx.font = '16px SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif';
@@ -381,18 +360,18 @@ export default function AppleMinimalistSensorVisualizer() {
                     centerY + textRadius * Math.sin(radian));
             });
 
-            // Draw needle
+            
             ctx.save();
             ctx.translate(centerX, centerY);
             ctx.rotate(angle);
 
-            // Shadow for needle
+            
             ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
             ctx.shadowBlur = 5;
             ctx.shadowOffsetX = 1;
             ctx.shadowOffsetY = 1;
 
-            // North (red)
+            
             ctx.fillStyle = 'rgba(255, 59, 48, 0.9)';
             ctx.beginPath();
             ctx.moveTo(-8, 0);
@@ -401,7 +380,7 @@ export default function AppleMinimalistSensorVisualizer() {
             ctx.closePath();
             ctx.fill();
 
-            // South (blue)
+            
             ctx.fillStyle = 'rgba(0, 122, 255, 0.9)';
             ctx.beginPath();
             ctx.moveTo(-8, 0);
@@ -410,7 +389,7 @@ export default function AppleMinimalistSensorVisualizer() {
             ctx.closePath();
             ctx.fill();
 
-            // Draw center cap
+            
             ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
             ctx.strokeStyle = 'rgba(200, 200, 200, 0.8)';
             ctx.lineWidth = 1;
@@ -421,31 +400,31 @@ export default function AppleMinimalistSensorVisualizer() {
 
             ctx.restore();
 
-            // Draw field strength indicator
+            
             const barWidth = width * 0.6;
             const barHeight = 6;
             const barX = (width - barWidth) / 2;
             const barY = height - 40;
 
-            // Background
+            
             ctx.fillStyle = 'rgba(220, 220, 220, 0.8)';
             ctx.beginPath();
             ctx.roundRect(barX, barY, barWidth, barHeight, 3);
             ctx.fill();
 
-            // Value
+            
             ctx.fillStyle = 'rgba(88, 86, 214, 0.8)';
             ctx.beginPath();
             ctx.roundRect(barX, barY, barWidth * normalizedStrength, barHeight, 3);
             ctx.fill();
 
-            // Label
+            
             ctx.fillStyle = 'rgba(100, 100, 100, 0.8)';
             ctx.font = '12px SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif';
             ctx.textAlign = 'center';
             ctx.fillText(`Field Strength: ${fieldStrength.toFixed(2)} μT`, centerX, barY + 20);
 
-            // Draw values
+            
             ctx.textAlign = 'left';
             ctx.textBaseline = 'top';
             ctx.fillText(`X: ${x.toFixed(2)} μT`, 15, 15);
@@ -453,7 +432,7 @@ export default function AppleMinimalistSensorVisualizer() {
             ctx.fillText(`Z: ${z.toFixed(2)} μT`, 15, 55);
         };
 
-        // Animation loop - still animate smoothly but with 3s data updates
+        
         const animate = () => {
             if (accelCanvasRef.current && activeTab === 'accelerometer') {
                 drawAccelerometer();
@@ -479,7 +458,7 @@ export default function AppleMinimalistSensorVisualizer() {
         };
     }, [permission, sensorData, activeTab]);
 
-    // Set canvas sizes on mount and resize
+    
     useEffect(() => {
         const resizeCanvas = () => {
             const canvases = [accelCanvasRef, gyroCanvasRef, magCanvasRef];
@@ -549,7 +528,6 @@ export default function AppleMinimalistSensorVisualizer() {
                     <h1 className="text-3xl font-semibold text-center text-gray-800">Sensor Data</h1>
                 </header>
 
-                {/* Tab navigation - Apple style */}
                 <div className="flex justify-center mb-6">
                     <div className="bg-gray-200 rounded-lg p-1">
                         {['accelerometer', 'gyroscope', 'magnetometer'].map((tab) => (
@@ -567,9 +545,7 @@ export default function AppleMinimalistSensorVisualizer() {
                     </div>
                 </div>
 
-                {/* Active sensor visualization */}
                 <div className="relative aspect-video bg-white rounded-2xl overflow-hidden shadow-md mb-8">
-                    {/* Canvas containers */}
                     <div className={`absolute inset-0 ${activeTab === 'accelerometer' ? 'opacity-100' : 'opacity-0 pointer-events-none'} transition-opacity duration-500`}>
                         <canvas ref={accelCanvasRef} className="w-full h-full"></canvas>
                     </div>
@@ -582,14 +558,12 @@ export default function AppleMinimalistSensorVisualizer() {
                         <canvas ref={magCanvasRef} className="w-full h-full"></canvas>
                     </div>
 
-                    {/* Update indicator */}
                     <div className="absolute bottom-4 right-4 bg-white rounded-lg px-3 py-2 text-sm flex items-center shadow-sm">
                         <div className="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></div>
                         <span className="text-gray-500">Updates every 3s</span>
                     </div>
                 </div>
 
-                {/* Values display - Apple style cards */}
                 <div className="grid grid-cols-3 gap-4">
                     {['x', 'y', 'z'].map(axis => {
                         const value = sensorData[activeTab][axis];
@@ -627,13 +601,11 @@ export default function AppleMinimalistSensorVisualizer() {
                     })}
                 </div>
 
-                {/* Instructions */}
                 <div className="mt-8 text-center">
                     <p className="text-gray-400 text-sm">Move your device to update sensor readings every 3 seconds</p>
                     <p className="mt-2 text-xs text-gray-400">Device orientation and position are shown in real-time</p>
                 </div>
 
-                {/* Last updated indicator */}
                 <div className="mt-6 text-center">
                     <div className="inline-flex items-center px-3 py-1 bg-gray-100 rounded-full text-xs text-gray-500">
                         <span>Last updated: {new Date(lastUpdated).toLocaleTimeString()}</span>

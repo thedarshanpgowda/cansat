@@ -16,7 +16,7 @@ export default function Home() {
       <Title />
       <EnvironmentalDashboard />
       <Dashboard />
-      <AppleMinimalistSensorVisualizer />
+      {/* <AppleMinimalistSensorVisualizer /> */}
     </div>
   );
 }
