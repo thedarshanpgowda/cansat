@@ -1,107 +1,40 @@
 import { useState, useEffect, useRef } from 'react';
 
-export default function AppleMinimalistSensorVisualizer() {
+export default function AppleMinimalistSensorVisualizer({ data }) {
     const [sensorData, setSensorData] = useState({
         accelerometer: { x: 0, y: 0, z: 0 },
-        gyroscope: { x: 0, y: 0, z: 0 },
-        magnetometer: { x: 0, y: 0, z: 0 }
+        gyroscope: { x: 0, y: 0, z: 0 }
     });
 
-    const [activeTab, setActiveTab] = useState('accelerometer');
-    const [permission, setPermission] = useState('pending');
     const [lastUpdated, setLastUpdated] = useState(Date.now());
     const animationRef = useRef(null);
 
     const accelCanvasRef = useRef(null);
     const gyroCanvasRef = useRef(null);
-    const magCanvasRef = useRef(null);
 
+    // Update the sensor data when the data prop changes
     useEffect(() => {
-        if (!window.DeviceMotionEvent || !window.DeviceOrientationEvent) {
-            setPermission('unsupported');
-            return;
-        }
-
-        const requestSensorPermission = async () => {
-            try {
-                if (typeof DeviceMotionEvent.requestPermission === 'function') {
-                    const permissionState = await DeviceMotionEvent.requestPermission();
-                    setPermission(permissionState);
-                } else {
-                    setPermission('granted');
+        if (data) {
+            setSensorData({
+                accelerometer: {
+                    x: parseFloat(data.accleremeter_x) || 0,
+                    y: parseFloat(data.accleremeter_y) || 0,
+                    z: parseFloat(data.accleremeter_z) || 0
+                },
+                gyroscope: {
+                    x: parseFloat(data.gyroscope_x) || 0,
+                    y: parseFloat(data.gyroscope_y) || 0,
+                    z: parseFloat(data.gyroscope_z) || 0
                 }
-            } catch (error) {
-                setPermission('denied');
-                console.error('Error requesting sensor permission:', error);
+            });
+
+            if (data.date_time) {
+                setLastUpdated(new Date(data.date_time).getTime());
             }
-        };
-
-        const handleMotion = (event) => {
-            const currentTime = Date.now();
-            if (currentTime - lastUpdated >= 3000) {
-                const accel = event.accelerationIncludingGravity || { x: 0, y: 0, z: 0 };
-
-                setSensorData(prev => ({
-                    ...prev,
-                    accelerometer: {
-                        x: accel.x ? parseFloat(accel.x.toFixed(2)) : 0,
-                        y: accel.y ? parseFloat(accel.y.toFixed(2)) : 0,
-                        z: accel.z ? parseFloat(accel.z.toFixed(2)) : 0
-                    }
-                }));
-                setLastUpdated(currentTime);
-            }
-        };
-
-        const handleOrientation = (event) => {
-            const currentTime = Date.now();
-            if (currentTime - lastUpdated >= 3000) {
-                setSensorData(prev => ({
-                    ...prev,
-                    gyroscope: {
-                        x: event.alpha ? parseFloat(event.alpha.toFixed(2)) : 0,
-                        y: event.beta ? parseFloat(event.beta.toFixed(2)) : 0,
-                        z: event.gamma ? parseFloat(event.gamma.toFixed(2)) : 0
-                    }
-                }));
-            }
-        };
-
-        const simulateMagnetometer = () => {
-            const interval = setInterval(() => {
-                setSensorData(prev => ({
-                    ...prev,
-                    magnetometer: {
-                        x: parseFloat((Math.sin(Date.now() / 5000) * 50).toFixed(2)),
-                        y: parseFloat((Math.cos(Date.now() / 7000) * 50).toFixed(2)),
-                        z: parseFloat((Math.sin(Date.now() / 9000) * 50).toFixed(2))
-                    }
-                }));
-            }, 3000);
-
-            return () => clearInterval(interval);
-        };
-
-        if (permission === 'granted') {
-            window.addEventListener('devicemotion', handleMotion);
-            window.addEventListener('deviceorientation', handleOrientation);
-            const cleanupMagnetometer = simulateMagnetometer();
-
-            return () => {
-                window.removeEventListener('devicemotion', handleMotion);
-                window.removeEventListener('deviceorientation', handleOrientation);
-                cleanupMagnetometer();
-            };
         }
-
-        if (permission === 'pending') {
-            requestSensorPermission();
-        }
-    }, [permission, lastUpdated]);
+    }, [data]);
 
     useEffect(() => {
-        if (permission !== 'granted') return;
-
         const drawAccelerometer = () => {
             const canvas = accelCanvasRef.current;
             if (!canvas) return;
@@ -193,31 +126,25 @@ export default function AppleMinimalistSensorVisualizer() {
             const width = canvas.width;
             const height = canvas.height;
 
-            
             ctx.fillStyle = 'rgba(250, 250, 250, 0.9)';
             ctx.fillRect(0, 0, width, height);
 
-            
             const centerX = width / 2;
             const centerY = height / 2;
             const size = Math.min(width, height) * 0.7;
 
-            
             ctx.save();
             ctx.translate(centerX, centerY);
 
-            
             const degToRad = Math.PI / 180;
             ctx.rotate(sensorData.gyroscope.z * degToRad);
 
-            
             ctx.strokeStyle = 'rgba(220, 220, 220, 0.9)';
             ctx.lineWidth = 2;
             ctx.beginPath();
             ctx.arc(0, 0, size / 2, 0, Math.PI * 2);
             ctx.stroke();
 
-            
             for (let i = 0; i < 360; i += 30) {
                 const angle = i * degToRad;
                 const innerRadius = size / 2 - 15;
@@ -231,14 +158,13 @@ export default function AppleMinimalistSensorVisualizer() {
                 ctx.stroke();
             }
 
-            
             ctx.fillStyle = 'rgba(80, 80, 80, 0.9)';
             ctx.font = '16px SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
             const directions = ['N', 'E', 'S', 'W'];
-            const directionAngles = [270, 0, 90, 180]; 
+            const directionAngles = [270, 0, 90, 180];
 
             directions.forEach((dir, i) => {
                 const angle = directionAngles[i] * degToRad;
@@ -246,18 +172,15 @@ export default function AppleMinimalistSensorVisualizer() {
                 ctx.fillText(dir, textRadius * Math.cos(angle), textRadius * Math.sin(angle));
             });
 
-            
             const betaRadians = sensorData.gyroscope.y * degToRad;
             const gammaRadians = sensorData.gyroscope.x * degToRad;
 
-            
             const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, size / 4);
             gradient.addColorStop(0, 'rgba(255, 45, 85, 0.9)');
             gradient.addColorStop(1, 'rgba(255, 45, 85, 0.3)');
 
             ctx.fillStyle = gradient;
 
-            
             ctx.beginPath();
             ctx.ellipse(
                 Math.sin(gammaRadians) * 10,
@@ -268,17 +191,14 @@ export default function AppleMinimalistSensorVisualizer() {
             );
             ctx.fill();
 
-            
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
             ctx.lineWidth = 3;
 
-            
             ctx.beginPath();
             ctx.moveTo(-size / 10, 0);
             ctx.lineTo(size / 10, 0);
             ctx.stroke();
 
-            
             ctx.beginPath();
             ctx.moveTo(0, -size / 10);
             ctx.lineTo(0, size / 10);
@@ -286,7 +206,6 @@ export default function AppleMinimalistSensorVisualizer() {
 
             ctx.restore();
 
-            
             ctx.fillStyle = 'rgba(100, 100, 100, 0.8)';
             ctx.font = '14px SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif';
             ctx.textAlign = 'left';
@@ -296,154 +215,13 @@ export default function AppleMinimalistSensorVisualizer() {
             ctx.fillText(`γ: ${sensorData.gyroscope.z}°`, 15, 55);
         };
 
-        const drawMagnetometer = () => {
-            const canvas = magCanvasRef.current;
-            if (!canvas) return;
-
-            const ctx = canvas.getContext('2d');
-            const width = canvas.width;
-            const height = canvas.height;
-
-            
-            ctx.fillStyle = 'rgba(250, 250, 250, 0.9)';
-            ctx.fillRect(0, 0, width, height);
-
-            
-            const centerX = width / 2;
-            const centerY = height / 2;
-            const size = Math.min(width, height) * 0.7;
-
-            
-            const { x, y, z } = sensorData.magnetometer;
-            const fieldStrength = Math.sqrt(x * x + y * y + z * z);
-            const normalizedStrength = Math.min(1, fieldStrength / 100);
-
-            
-            const angle = Math.atan2(y, x);
-
-            
-            ctx.fillStyle = 'rgba(240, 240, 240, 0.8)';
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, size / 2, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.strokeStyle = 'rgba(220, 220, 220, 0.9)';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            
-            const numRings = 3;
-            for (let i = 1; i <= numRings; i++) {
-                const radius = (size / 2) * (i / numRings);
-
-                ctx.strokeStyle = `rgba(200, 200, 200, ${0.6 - (i / numRings) * 0.3})`;
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-                ctx.stroke();
-            }
-
-            
-            const directions = ['N', 'E', 'S', 'W'];
-            const directionAngles = [270, 0, 90, 180]; 
-
-            ctx.fillStyle = 'rgba(80, 80, 80, 0.9)';
-            ctx.font = '16px SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-
-            directionAngles.forEach((angle, i) => {
-                const radian = angle * (Math.PI / 180);
-                const textRadius = size / 2 - 20;
-                ctx.fillText(directions[i],
-                    centerX + textRadius * Math.cos(radian),
-                    centerY + textRadius * Math.sin(radian));
-            });
-
-            
-            ctx.save();
-            ctx.translate(centerX, centerY);
-            ctx.rotate(angle);
-
-            
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
-            ctx.shadowBlur = 5;
-            ctx.shadowOffsetX = 1;
-            ctx.shadowOffsetY = 1;
-
-            
-            ctx.fillStyle = 'rgba(255, 59, 48, 0.9)';
-            ctx.beginPath();
-            ctx.moveTo(-8, 0);
-            ctx.lineTo(0, -size / 3);
-            ctx.lineTo(8, 0);
-            ctx.closePath();
-            ctx.fill();
-
-            
-            ctx.fillStyle = 'rgba(0, 122, 255, 0.9)';
-            ctx.beginPath();
-            ctx.moveTo(-8, 0);
-            ctx.lineTo(0, size / 3);
-            ctx.lineTo(8, 0);
-            ctx.closePath();
-            ctx.fill();
-
-            
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-            ctx.strokeStyle = 'rgba(200, 200, 200, 0.8)';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.arc(0, 0, 10, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
-
-            ctx.restore();
-
-            
-            const barWidth = width * 0.6;
-            const barHeight = 6;
-            const barX = (width - barWidth) / 2;
-            const barY = height - 40;
-
-            
-            ctx.fillStyle = 'rgba(220, 220, 220, 0.8)';
-            ctx.beginPath();
-            ctx.roundRect(barX, barY, barWidth, barHeight, 3);
-            ctx.fill();
-
-            
-            ctx.fillStyle = 'rgba(88, 86, 214, 0.8)';
-            ctx.beginPath();
-            ctx.roundRect(barX, barY, barWidth * normalizedStrength, barHeight, 3);
-            ctx.fill();
-
-            
-            ctx.fillStyle = 'rgba(100, 100, 100, 0.8)';
-            ctx.font = '12px SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText(`Field Strength: ${fieldStrength.toFixed(2)} μT`, centerX, barY + 20);
-
-            
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'top';
-            ctx.fillText(`X: ${x.toFixed(2)} μT`, 15, 15);
-            ctx.fillText(`Y: ${y.toFixed(2)} μT`, 15, 35);
-            ctx.fillText(`Z: ${z.toFixed(2)} μT`, 15, 55);
-        };
-
-        
         const animate = () => {
-            if (accelCanvasRef.current && activeTab === 'accelerometer') {
+            if (accelCanvasRef.current) {
                 drawAccelerometer();
             }
 
-            if (gyroCanvasRef.current && activeTab === 'gyroscope') {
+            if (gyroCanvasRef.current) {
                 drawGyroscope();
-            }
-
-            if (magCanvasRef.current && activeTab === 'magnetometer') {
-                drawMagnetometer();
             }
 
             animationRef.current = requestAnimationFrame(animate);
@@ -456,12 +234,11 @@ export default function AppleMinimalistSensorVisualizer() {
                 cancelAnimationFrame(animationRef.current);
             }
         };
-    }, [permission, sensorData, activeTab]);
+    }, [sensorData]);
 
-    
     useEffect(() => {
         const resizeCanvas = () => {
-            const canvases = [accelCanvasRef, gyroCanvasRef, magCanvasRef];
+            const canvases = [accelCanvasRef, gyroCanvasRef];
             canvases.forEach(canvasRef => {
                 if (canvasRef.current) {
                     const canvas = canvasRef.current;
@@ -477,133 +254,95 @@ export default function AppleMinimalistSensorVisualizer() {
         return () => {
             window.removeEventListener('resize', resizeCanvas);
         };
-    }, [permission]);
-
-    if (permission === 'pending') {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-white text-gray-900 p-6">
-                <div className="text-center max-w-md">
-                    <h1 className="text-3xl font-semibold mb-6">Sensor Access</h1>
-                    <p className="mb-8 text-gray-500">This visualization requires access to your devices motion and orientation sensors.</p>
-                    <button
-                        onClick={() => setPermission('granted')}
-                        className="bg-blue-500 text-white font-medium py-3 px-8 rounded-lg transition-all duration-300 hover:bg-blue-600"
-                    >
-                        Enable Sensors
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
-    if (permission === 'denied' || permission === 'unsupported') {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-white text-gray-900 p-6">
-                <div className="text-center max-w-md">
-                    <h1 className="text-3xl font-semibold mb-6">
-                        {permission === 'denied' ? 'Sensor Access Denied' : 'Sensors Not Supported'}
-                    </h1>
-                    <p className="mb-6 text-gray-500">
-                        {permission === 'denied'
-                            ? 'Please allow access to device motion and orientation sensors in your browser settings.'
-                            : 'Your device does not support the required motion and orientation sensors.'}
-                    </p>
-                    {permission === 'denied' && (
-                        <button
-                            onClick={() => setPermission('granted')}
-                            className="bg-blue-500 text-white font-medium py-3 px-8 rounded-lg transition-all duration-300 hover:bg-blue-600"
-                        >
-                            Try Again
-                        </button>
-                    )}
-                </div>
-            </div>
-        );
-    }
+    }, []);
 
     return (
-        <div className="min-h-screen bg-gray-50 text-gray-900">
-            <div className="max-w-4xl mx-auto p-4">
+        <div className="pb-15 text-gray-900">
+            <div className="max-w-7xl mx-auto p-4">
                 <header className="py-6">
-                    <h1 className="text-3xl font-semibold text-center text-gray-800">Sensor Data</h1>
+                    <h1 className="text-3xl font-semibold text-gray-800">Orientation Data</h1>
                 </header>
 
-                <div className="flex justify-center mb-6">
-                    <div className="bg-gray-200 rounded-lg p-1">
-                        {['accelerometer', 'gyroscope', 'magnetometer'].map((tab) => (
-                            <button
-                                key={tab}
-                                onClick={() => setActiveTab(tab)}
-                                className={`px-6 py-2 rounded-md font-medium transition-all duration-200 ${activeTab === tab
-                                    ? 'bg-white text-blue-500 shadow-sm'
-                                    : 'text-gray-500 hover:text-gray-800'
-                                    }`}
-                            >
-                                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                            </button>
-                        ))}
-                    </div>
-                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    {/* Accelerometer Card */}
+                    <div className="bg-white rounded-2xl overflow-hidden shadow-md">
+                        <div className="p-4 border-b border-gray-100">
+                            <h2 className="text-lg font-medium text-gray-800">Accelerometer</h2>
+                        </div>
+                        <div className="relative aspect-video">
+                            <canvas ref={accelCanvasRef} className="w-full h-full"></canvas>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4 p-4">
+                            {['x', 'y', 'z'].map(axis => {
+                                const value = sensorData.accelerometer[axis];
+                                const unit = ' m/s²';
 
-                <div className="relative aspect-video bg-white rounded-2xl overflow-hidden shadow-md mb-8">
-                    <div className={`absolute inset-0 ${activeTab === 'accelerometer' ? 'opacity-100' : 'opacity-0 pointer-events-none'} transition-opacity duration-500`}>
-                        <canvas ref={accelCanvasRef} className="w-full h-full"></canvas>
-                    </div>
-
-                    <div className={`absolute inset-0 ${activeTab === 'gyroscope' ? 'opacity-100' : 'opacity-0 pointer-events-none'} transition-opacity duration-500`}>
-                        <canvas ref={gyroCanvasRef} className="w-full h-full"></canvas>
-                    </div>
-
-                    <div className={`absolute inset-0 ${activeTab === 'magnetometer' ? 'opacity-100' : 'opacity-0 pointer-events-none'} transition-opacity duration-500`}>
-                        <canvas ref={magCanvasRef} className="w-full h-full"></canvas>
-                    </div>
-
-                    <div className="absolute bottom-4 right-4 bg-white rounded-lg px-3 py-2 text-sm flex items-center shadow-sm">
-                        <div className="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></div>
-                        <span className="text-gray-500">Updates every 3s</span>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-4">
-                    {['x', 'y', 'z'].map(axis => {
-                        const value = sensorData[activeTab][axis];
-                        const unit = activeTab === 'gyroscope' ? '°' : activeTab === 'magnetometer' ? ' μT' : ' m/s²';
-
-                        return (
-                            <div
-                                key={`${activeTab}-${axis}`}
-                                className="bg-white rounded-xl p-4 shadow-sm border border-gray-100"
-                            >
-                                <div className="flex items-center justify-between mb-2">
-                                    <div className="font-medium text-gray-900">Axis {axis.toUpperCase()}</div>
-                                    <div className="text-xs text-gray-400 uppercase">{activeTab}</div>
-                                </div>
-
-                                <div className="text-2xl font-light mb-2 text-gray-800">
-                                    {value}{unit}
-                                </div>
-
-                                <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden">
+                                return (
                                     <div
-                                        className={`h-full transition-all duration-300 rounded-full ${activeTab === 'accelerometer' ? 'bg-blue-500' :
-                                            activeTab === 'gyroscope' ? 'bg-pink-500' : 'bg-purple-500'
-                                            }`}
-                                        style={{
-                                            width: `${Math.min(100, Math.abs(value / (
-                                                activeTab === 'gyroscope' ? 180 :
-                                                    activeTab === 'magnetometer' ? 100 : 20
-                                            ) * 100))}%`
-                                        }}
-                                    />
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
+                                        key={`accelerometer-${axis}`}
+                                        className="bg-gray-50 rounded-xl p-3 border border-amber-100"
+                                    >
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="font-medium text-gray-900">Axis {axis.toUpperCase()}</div>
+                                        </div>
 
-                <div className="mt-8 text-center">
-                    <p className="text-gray-400 text-sm">Move your device to update sensor readings every 3 seconds</p>
-                    <p className="mt-2 text-xs text-gray-400">Device orientation and position are shown in real-time</p>
+                                        <div className="text-xl font-light mb-2 text-gray-800">
+                                            {value}{unit}
+                                        </div>
+
+                                        <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full transition-all duration-300 rounded-full bg-blue-500"
+                                                style={{
+                                                    width: `${Math.min(100, Math.abs(value / 20 * 100))}%`
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Gyroscope Card */}
+                    <div className="bg-white rounded-2xl overflow-hidden shadow-md">
+                        <div className="p-4 border-b border-gray-100">
+                            <h2 className="text-lg font-medium text-gray-800">Gyroscope</h2>
+                        </div>
+                        <div className="relative aspect-video">
+                            <canvas ref={gyroCanvasRef} className="w-full h-full"></canvas>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4 p-4">
+                            {['x', 'y', 'z'].map(axis => {
+                                const value = sensorData.gyroscope[axis];
+                                const unit = '°';
+
+                                return (
+                                    <div
+                                        key={`gyroscope-${axis}`}
+                                        className="bg-gray-50 rounded-xl p-3"
+                                    >
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="font-medium text-gray-900">Axis {axis.toUpperCase()}</div>
+                                        </div>
+
+                                        <div className="text-xl font-light mb-2 text-gray-800">
+                                            {value}{unit}
+                                        </div>
+
+                                        <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full transition-all duration-300 rounded-full bg-pink-500"
+                                                style={{
+                                                    width: `${Math.min(100, Math.abs(value / 180 * 100))}%`
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
                 </div>
 
                 <div className="mt-6 text-center">

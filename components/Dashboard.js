@@ -23,6 +23,7 @@ import {
     Tooltip,
     ResponsiveContainer
 } from 'recharts';
+import AppleMinimalistSensorVisualizer from './Gyro';
 
 delete Icon.Default.prototype._getIconUrl;
 Icon.Default.mergeOptions({
@@ -32,18 +33,19 @@ Icon.Default.mergeOptions({
 });
 
 export default function LocationTrackingDashboard() {
-    const [position, setPosition] = useState([12.9441, 77.6983]);
-    const [gpxTrack, setGpxTrack] = useState([]); 
+    const [position, setPosition] = useState([13.023742, 76.102257]);
+    const [gpxTrack, setGpxTrack] = useState([]);
     const [satellites, setSatellites] = useState(0);
     const [hdop, setHdop] = useState(0);
     const [speed, setSpeed] = useState(0);
+    const [mpu60, setMpu60] = useState({})
     const [bmeData, setBmeData] = useState({
         temperature: 0,
         humidity: 0,
         pressure: 0,
         gasResistance: 0
     });
-    const [data, setData] = useState([]); 
+    const [data, setData] = useState([]);
     const [activeMetric, setActiveMetric] = useState('temperature');
 
     const metrics = {
@@ -103,21 +105,21 @@ export default function LocationTrackingDashboard() {
         eventSource.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
-
+                console.log(data);
                 const newPosition = [
                     parseFloat(data.neom8n.latitude),
                     parseFloat(data.neom8n.longitude)
                 ];
 
                 setPosition(newPosition);
-                setGpxTrack(prevTrack => [...prevTrack, newPosition]); 
+                setGpxTrack(prevTrack => [...prevTrack, newPosition]);
 
-                
+
                 setSatellites(parseInt(data.neom8n.satellites, 10));
                 setHdop(parseFloat(data.neom8n.hdop));
                 setSpeed(parseFloat(data.neom8n.speed_kmh));
 
-                
+
                 setBmeData({
                     temperature: parseFloat(data.bme680.temperature),
                     humidity: parseFloat(data.bme680.humidity),
@@ -125,8 +127,10 @@ export default function LocationTrackingDashboard() {
                     gasResistance: parseFloat(data.bme680.gas_resistance)
                 });
 
+                setMpu60(data.mpu6050);
+
                 setData(prevData => [
-                    ...prevData.slice(-19), 
+                    ...prevData.slice(-19),
                     {
                         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
                         temperature: parseFloat(data.bme680.temperature),
@@ -212,13 +216,15 @@ export default function LocationTrackingDashboard() {
 
                         <div className="w-full md:w-4/12 p-6 flex flex-col justify-between ml-3 border rounded-2xl border-gray-200 shadow-md">
                             <div>
-                                <div className="flex items-center mb-4">
-                                    <MapPin className="mr-3" size={24} strokeWidth={2} />
-                                    <h2 className="text-2xl font-semibold tracking-tight">Location</h2>
+                                <div className='flex items-center justify-between h-11 border-b border-gray-200 mb-6'>
+                                    <div className="flex items-center mb-4">
+                                        <MapPin className="mr-3" size={24} strokeWidth={2} />
+                                        <h2 className="text-2xl font-semibold tracking-tight">Location</h2>
+                                    </div>
+                                    <p className="text-gray-600 mb-6 font-medium">
+                                        {position[0].toFixed(6)}, {position[1].toFixed(6)}
+                                    </p>
                                 </div>
-                                <p className="text-gray-600 mb-6 font-medium">
-                                    {position[0].toFixed(6)}, {position[1].toFixed(6)}
-                                </p>
 
                                 <div className="space-y-6 mb-6">
                                     <div className="flex justify-between items-center">
@@ -258,11 +264,41 @@ export default function LocationTrackingDashboard() {
                     </div>
                 </div>
 
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 my-7">
+                    {Object.keys(metrics).map(key => (
+                        <div
+                            key={key}
+                            className="bg-white rounded-2xl shadow-md p-5 border border-gray-100 transition-all hover:shadow-lg"
+                        >
+                            <div className="flex items-center mb-3">
+                                <div
+                                    className="p-2 rounded-full mr-3"
+                                    style={{ backgroundColor: `${metrics[key].color}15` }}
+                                >
+                                    <div style={{ color: metrics[key].color }}>{metrics[key].icon}</div>
+                                </div>
+                                <span className="text-base font-medium text-gray-500">{metrics[key].name}</span>
+                            </div>
+                            <div className="flex items-baseline">
+                                <div className="text-2xl font-bold tracking-tight" style={{ color: metrics[key].color }}>
+                                    {metrics[key].current}
+                                </div>
+                                <div className="ml-2 text-gray-500 font-small">{metrics[key].unit}</div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                
+                <AppleMinimalistSensorVisualizer data={mpu60} />
+
+
                 <div className="bg-white rounded-2xl shadow-md p-6 border border-gray-100">
                     <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-2xl font-semibold tracking-tight">Environmental Data</h2>
+                        <h2 className="text-2xl font-semibold tracking-tight">Telemetry Graphs</h2>
                         <div className="text-sm text-gray-500">Live data updates every 3 seconds</div>
                     </div>
+
+
 
                     <div className="flex gap-3 mb-6 overflow-x-auto pb-2">
                         {graphableMetrics.map(key => (
@@ -279,6 +315,8 @@ export default function LocationTrackingDashboard() {
                             </button>
                         ))}
                     </div>
+
+
 
                     <div className="h-80 w-full">
                         <ResponsiveContainer width="100%" height="100%">
@@ -320,30 +358,7 @@ export default function LocationTrackingDashboard() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-                    {Object.keys(metrics).map(key => (
-                        <div
-                            key={key}
-                            className="bg-white rounded-2xl shadow-md p-5 border border-gray-100 transition-all hover:shadow-lg"
-                        >
-                            <div className="flex items-center mb-3">
-                                <div
-                                    className="p-2 rounded-full mr-3"
-                                    style={{ backgroundColor: `${metrics[key].color}15` }}
-                                >
-                                    <div style={{ color: metrics[key].color }}>{metrics[key].icon}</div>
-                                </div>
-                                <span className="text-base font-medium text-gray-500">{metrics[key].name}</span>
-                            </div>
-                            <div className="flex items-baseline">
-                                <div className="text-2xl font-bold tracking-tight" style={{ color: metrics[key].color }}>
-                                    {metrics[key].current}
-                                </div>
-                                <div className="ml-2 text-gray-500 font-small">{metrics[key].unit}</div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+
             </div>
         </>
     );
