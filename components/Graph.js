@@ -19,7 +19,6 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 
-
 const generateData = () => {
     const now = new Date();
     const data = [];
@@ -38,10 +37,9 @@ const generateData = () => {
     return data;
 };
 
-export default function EnvironmentalDashboard() {
+export default function EnvironmentalDashboard({ bmeData }) {
     const [activeMetric, setActiveMetric] = useState('temperature');
-    const [data, setData] = useState(generateData());
-
+    const [data, setData] = useState(bmeData || generateData());
 
     const metrics = {
         temperature: {
@@ -96,36 +94,6 @@ export default function EnvironmentalDashboard() {
 
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const newDataPoint = await axios.get('/api/environment');
-// -------------------------------------------------------------------------------------------------------------------
-                setData(prevData => {
-                    const newData = [...prevData, {
-                        time: new Date().toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            second: '2-digit',
-                        }),
-                        ...newDataPoint,
-                    }];
-
-                    if (newData.length > 20) newData.shift();
-
-                    return newData;
-                });
-            } catch (error) {
-                console.error("Error fetching data:", error);
-            }
-        };
-
-        const interval = setInterval(fetchData, 3000);
-        return () => clearInterval(interval);
-    }, []);
-
-
-
-    useEffect(() => {
         if (data.length > 0) {
             const latestData = data[data.length - 1];
             metrics.temperature.current = Math.round(latestData.temperature * 10) / 10;
@@ -134,7 +102,6 @@ export default function EnvironmentalDashboard() {
             metrics.gasResistance.current = Math.round(latestData.gasResistance * 10) / 10;
         }
     }, [data]);
-
 
     const CustomTooltip = ({ active, payload, label }) => {
         if (active && payload && payload.length) {
@@ -150,7 +117,6 @@ export default function EnvironmentalDashboard() {
         return null;
     };
 
-
     const getYAxisDomain = () => {
         switch (activeMetric) {
             case 'temperature':
@@ -158,27 +124,24 @@ export default function EnvironmentalDashboard() {
             case 'humidity':
                 return [30, 80];
             case 'pressure':
-                return [1000, 1030];
+                return [900, 950];
             case 'gasResistance':
-                return [5, 15];
+                return [0, 100];
             default:
                 return [0, 100];
         }
     };
 
-
     const graphableMetrics = Object.keys(metrics).filter(key => metrics[key].graphable);
 
     return (
         <div className="flex flex-col gap-6 p-6 max-w-7xl mx-auto  font-sans">
-            {/* Main chart section */}
             <div className="bg-white rounded-2xl shadow-md p-6 border border-gray-100">
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-2xl font-semibold tracking-tight">Environmental Data</h2>
                     <div className="text-sm text-gray-500">1 minute data with 3s intervals</div>
                 </div>
 
-                {/* Metric selector */}
                 <div className="flex gap-3 mb-6 overflow-x-auto pb-2">
                     {graphableMetrics.map(key => (
                         <button
@@ -236,7 +199,6 @@ export default function EnvironmentalDashboard() {
                 </div>
             </div>
 
-            {/* Environmental metrics cards */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
                 {Object.keys(metrics).map(key => (
                     <div
