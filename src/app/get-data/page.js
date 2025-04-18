@@ -31,7 +31,7 @@ function Page() {
     }
 
     const handleDownload = () => {
-        const downloadUrl = document.downloadUrl || `http://localhost:3000/api/download/${document.id}`
+        const downloadUrl = document.downloadUrl || `http://localhost:3000/archive/`
         window.open(downloadUrl, '_blank')
     }
 
