@@ -12,7 +12,6 @@ export default function AppleMinimalistSensorVisualizer({ data }) {
     const accelCanvasRef = useRef(null);
     const gyroCanvasRef = useRef(null);
 
-    // Update the sensor data when the data prop changes
     useEffect(() => {
         if (data) {
             setSensorData({
@@ -258,10 +257,7 @@ export default function AppleMinimalistSensorVisualizer({ data }) {
 
     return (
         <div className="pb-15 text-gray-900">
-            <div className="max-w-7xl mx-auto p-4">
-                <header className="py-6">
-                    <h1 className="text-3xl font-semibold text-gray-800">Orientation Data</h1>
-                </header>
+            <div className="max-w-7xl mx-auto">
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                     {/* Accelerometer Card */}

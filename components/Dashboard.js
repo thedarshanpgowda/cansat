@@ -1,4 +1,5 @@
 'use client'
+
 import { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -264,6 +265,10 @@ export default function LocationTrackingDashboard() {
                     </div>
                 </div>
 
+
+
+                <AppleMinimalistSensorVisualizer data={mpu60} />
+                
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 my-7">
                     {Object.keys(metrics).map(key => (
                         <div
@@ -288,9 +293,6 @@ export default function LocationTrackingDashboard() {
                         </div>
                     ))}
                 </div>
-                
-                <AppleMinimalistSensorVisualizer data={mpu60} />
-
 
                 <div className="bg-white rounded-2xl shadow-md p-6 border border-gray-100">
                     <div className="flex items-center justify-between mb-6">

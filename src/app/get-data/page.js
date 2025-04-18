@@ -5,7 +5,7 @@ import axios from 'axios'
 
 function Page() {
     const [date, setDate] = useState('')
-    const [sensor, setSensor] = useState('bme680') // Default selected sensor
+    const [sensor, setSensor] = useState('bme680')
     const [loading, setLoading] = useState(false)
     const [document, setDocument] = useState(null)
     const [error, setError] = useState(null)
@@ -17,9 +17,9 @@ function Page() {
 
             const response = await axios.post("http://localhost:3000/archive", {
                 date: date,
-                sensor: sensor // ⬅️ Send selected sensor
+                sensor: sensor
             })
-
+            console.log(response.data)
             setDocument(response.data)
             setError(null)
         } catch (err) {
